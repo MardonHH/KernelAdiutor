@@ -32,12 +32,12 @@ import android.widget.TextView;
 
 import com.grarak.kerneladiutor.FileBrowserActivity;
 import com.grarak.kerneladiutor.R;
-import com.grarak.kerneladiutor.elements.CardViewItem;
+import com.grarak.kerneladiutor.elements.cards.CardViewItem;
 import com.grarak.kerneladiutor.fragments.RecyclerViewFragment;
 import com.grarak.kerneladiutor.utils.Utils;
-import com.grarak.kerneladiutor.utils.root.RootFile;
-import com.grarak.kerneladiutor.utils.root.RootUtils;
 import com.grarak.kerneladiutor.utils.tools.Recovery;
+import com.kerneladiutor.library.root.RootFile;
+import com.kerneladiutor.library.root.RootUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public class RecoveryFragment extends RecyclerViewFragment {
 
     private AppCompatSpinner mRecoverySpinner;
 
-    private List<Recovery> mCommands = new ArrayList<>();
+    private final List<Recovery> mCommands = new ArrayList<>();
 
     @Override
     public boolean showApplyOnBoot() {
@@ -193,6 +193,9 @@ public class RecoveryFragment extends RecyclerViewFragment {
                 break;
             case R.id.menu_reboot_bootloader:
                 command = "reboot bootloader";
+                break;
+            case R.id.menu_reboot_soft:
+                command = "pkill zygote";
                 break;
             case R.id.menu_reboot_download:
                 command = "reboot download";

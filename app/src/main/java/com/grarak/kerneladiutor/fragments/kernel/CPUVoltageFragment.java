@@ -29,8 +29,8 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.grarak.kerneladiutor.R;
-import com.grarak.kerneladiutor.elements.EditTextCardView;
-import com.grarak.kerneladiutor.elements.SwitchCardView;
+import com.grarak.kerneladiutor.elements.cards.EditTextCardView;
+import com.grarak.kerneladiutor.elements.cards.SwitchCardView;
 import com.grarak.kerneladiutor.fragments.RecyclerViewFragment;
 import com.grarak.kerneladiutor.utils.Utils;
 import com.grarak.kerneladiutor.utils.kernel.CPUVoltage;
@@ -75,7 +75,7 @@ public class CPUVoltageFragment extends RecyclerViewFragment implements
 
         for (int i = 0; i < CPUVoltage.getFreqs().size(); i++) {
             mVoltageCard[i] = new EditTextCardView.DEditTextCard();
-            String freq = CPUVoltage.isFauxVoltage() ? String.valueOf(Utils.stringToInt(CPUVoltage
+            String freq = CPUVoltage.isVddVoltage() ? String.valueOf(Utils.stringToInt(CPUVoltage
                     .getFreqs().get(i)) / 1000) : CPUVoltage.getFreqs().get(i);
             mVoltageCard[i].setTitle(freq + getString(R.string.mhz));
 
@@ -113,8 +113,12 @@ public class CPUVoltageFragment extends RecyclerViewFragment implements
                             List<String> voltages = CPUVoltage.getVoltages();
                             if (voltages != null)
                                 for (int i = 0; i < mVoltageCard.length; i++) {
-                                    mVoltageCard[i].setDescription(voltages.get(i) + getString(R.string.mv));
-                                    mVoltageCard[i].setValue(voltages.get(i));
+                                    try {
+                                        mVoltageCard[i].setDescription(voltages.get(i) + getString(R.string.mv));
+                                        mVoltageCard[i].setValue(voltages.get(i));
+                                    } catch (IndexOutOfBoundsException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
                         }
                     });

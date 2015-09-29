@@ -17,19 +17,23 @@
 package com.grarak.kerneladiutor.services;
 
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
+import com.grarak.kerneladiutor.MainActivity;
 import com.grarak.kerneladiutor.R;
 import com.grarak.kerneladiutor.fragments.kernel.BatteryFragment;
 import com.grarak.kerneladiutor.fragments.kernel.CPUFragment;
 import com.grarak.kerneladiutor.fragments.kernel.CPUHotplugFragment;
 import com.grarak.kerneladiutor.fragments.kernel.CPUVoltageFragment;
+import com.grarak.kerneladiutor.fragments.kernel.EntropyFragment;
 import com.grarak.kerneladiutor.fragments.kernel.GPUFragment;
 import com.grarak.kerneladiutor.fragments.kernel.IOFragment;
 import com.grarak.kerneladiutor.fragments.kernel.KSMFragment;
@@ -37,12 +41,13 @@ import com.grarak.kerneladiutor.fragments.kernel.LMKFragment;
 import com.grarak.kerneladiutor.fragments.kernel.MiscFragment;
 import com.grarak.kerneladiutor.fragments.kernel.ScreenFragment;
 import com.grarak.kerneladiutor.fragments.kernel.SoundFragment;
+import com.grarak.kerneladiutor.fragments.kernel.ThermalFragment;
 import com.grarak.kerneladiutor.fragments.kernel.VMFragment;
 import com.grarak.kerneladiutor.fragments.kernel.WakeFragment;
 import com.grarak.kerneladiutor.utils.Constants;
 import com.grarak.kerneladiutor.utils.Utils;
 import com.grarak.kerneladiutor.utils.database.CommandDB;
-import com.grarak.kerneladiutor.utils.root.RootUtils;
+import com.kerneladiutor.library.root.RootUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,9 +57,9 @@ import java.util.List;
  */
 public class BootService extends Service {
 
-    private Handler hand = new Handler();
+    private final Handler hand = new Handler();
 
-    private int id = 1;
+    private final int id = 1;
     private NotificationManager mNotifyManager;
     private NotificationCompat.Builder mBuilder;
 
@@ -72,12 +77,13 @@ public class BootService extends Service {
 
     private void init() {
         final List<String> applys = new ArrayList<>();
+        final List<String> plugins = new ArrayList<>();
 
         Class[] classes = {BatteryFragment.class, CPUFragment.class, CPUHotplugFragment.class,
-                CPUVoltageFragment.class, GPUFragment.class, IOFragment.class,
+                CPUVoltageFragment.class, EntropyFragment.class, GPUFragment.class, IOFragment.class,
                 KSMFragment.class, LMKFragment.class, MiscFragment.class,
-                ScreenFragment.class, SoundFragment.class, VMFragment.class,
-                WakeFragment.class
+                ScreenFragment.class, SoundFragment.class, ThermalFragment.class,
+                VMFragment.class, WakeFragment.class
         };
 
         for (Class mClass : classes)
@@ -86,13 +92,27 @@ public class BootService extends Service {
                 applys.addAll(Utils.getApplys(mClass));
             }
 
-        if (applys.size() > 0) {
+        String plugs;
+        if (!(plugs = Utils.getString("plugins", "", this)).isEmpty()) {
+            String[] ps = plugs.split("wefewfewwgwe");
+            for (String plug : ps)
+                if (Utils.getBoolean(plug + "onboot", false, this)) plugins.add(plug);
+        }
+
+        if (applys.size() > 0 || plugins.size() > 0) {
             final int delay = Utils.getInt("applyonbootdelay", 5, this);
             mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             mBuilder = new NotificationCompat.Builder(this);
             mBuilder.setContentTitle(getString(R.string.apply_on_boot))
                     .setContentText(getString(R.string.apply_on_boot_time, delay))
                     .setSmallIcon(R.drawable.ic_launcher_preview);
+
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+            stackBuilder.addParentStack(MainActivity.class);
+            stackBuilder.addNextIntent(new Intent(this, MainActivity.class));
+            PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+            mBuilder.setContentIntent(pendingIntent);
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -112,18 +132,19 @@ public class BootService extends Service {
                         mBuilder.setContentText(getString(R.string.apply_on_boot_finished)).setProgress(0, 0, false);
                         mNotifyManager.notify(id, mBuilder.build());
                     }
-                    apply(applys);
+                    apply(applys, plugins);
                     stopSelf();
                 }
             }).start();
         } else stopSelf();
     }
 
-    private void apply(List<String> applys) {
+    private void apply(List<String> applys, List<String> plugins) {
         boolean hasRoot = false;
         boolean hasBusybox = false;
         if (RootUtils.rooted()) hasRoot = RootUtils.rootAccess();
         if (hasRoot) hasBusybox = RootUtils.busyboxInstalled();
+        RootUtils.closeSU();
 
         String message = getString(R.string.apply_on_boot_failed);
         if (!hasRoot) message += ": " + getString(R.string.no_root);
@@ -141,16 +162,27 @@ public class BootService extends Service {
         for (String file : writePermission)
             su.runCommand("chmod 644 " + file);
 
+        List<CommandDB.CommandItem> allCommands = new CommandDB(this).getAllCommands();
         List<String> commands = new ArrayList<>();
-        for (CommandDB.CommandItem commandItem : new CommandDB(this).getAllCommands())
-            for (String sys : applys) {
-                String path = commandItem.getPath();
-                if ((sys.contains(path) || path.contains(sys))) {
-                    String command = commandItem.getCommand();
-                    if (commands.indexOf(command) < 0)
-                        commands.add(command);
+        if (applys.size() > 0)
+            for (CommandDB.CommandItem commandItem : allCommands)
+                for (String sys : applys) {
+                    String path = commandItem.getPath();
+                    if ((sys.contains(path) || path.contains(sys))) {
+                        String command = commandItem.getCommand();
+                        if (commands.indexOf(command) < 0)
+                            commands.add(command);
+                    }
                 }
-            }
+
+        if (plugins.size() > 0)
+            for (CommandDB.CommandItem commandItem : allCommands)
+                for (String pluginName : plugins)
+                    if (commandItem.getPath().endsWith(pluginName)) {
+                        String command = commandItem.getCommand();
+                        if (commands.indexOf(command) < 0)
+                            commands.add(command);
+                    }
 
         for (String command : commands) {
             log("run: " + command);

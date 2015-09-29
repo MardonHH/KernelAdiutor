@@ -3,6 +3,7 @@
 // (C) Brandon Valosek, 2011 <bvalosek@gmail.com>
 //
 //-----------------------------------------------------------------------------
+// Modified by Willi Ye to work with big.LITTLE
 
 package com.bvalosek.cpuspy;
 
@@ -19,12 +20,17 @@ import java.util.Map;
  */
 public class CpuSpyApp extends Application {
 
-    private static final String PREF_OFFSETS = "offsets";
+    private final String PREF_OFFSETS;
 
     /**
      * the long-living object used to monitor the system frequency states
      */
-    private CpuStateMonitor _monitor = new CpuStateMonitor();
+    private final CpuStateMonitor _monitor;
+
+    public CpuSpyApp(int core) {
+        PREF_OFFSETS = "offsets" + core;
+        _monitor = new CpuStateMonitor(core);
+    }
 
     /**
      * On application start, load the saved offsets and stash the current kernel
@@ -32,6 +38,7 @@ public class CpuSpyApp extends Application {
      */
     @Override
     public void onCreate() {
+        super.onCreate();
         loadOffsets(getApplicationContext());
     }
 
@@ -49,7 +56,7 @@ public class CpuSpyApp extends Application {
     public void loadOffsets(Context context) {
         String prefs = Utils.getString(PREF_OFFSETS, "", context);
 
-        if (prefs == null || prefs.length() < 1) return;
+        if (prefs.length() < 1) return;
 
         // split the string by peroids and then the info by commas and load
         Map<Integer, Long> offsets = new HashMap<>();

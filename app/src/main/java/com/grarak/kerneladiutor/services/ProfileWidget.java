@@ -22,18 +22,17 @@ import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
-import com.grarak.kerneladiutor.MainActivity;
 import com.grarak.kerneladiutor.R;
-import com.grarak.kerneladiutor.fragments.tools.ProfileFragment;
 import com.grarak.kerneladiutor.utils.Utils;
 import com.grarak.kerneladiutor.utils.database.ProfileDB;
 import com.grarak.kerneladiutor.utils.root.Control;
-import com.grarak.kerneladiutor.utils.root.RootUtils;
+import com.kerneladiutor.library.root.RootUtils;
 
 import java.util.List;
 
@@ -42,7 +41,6 @@ import java.util.List;
  */
 public class ProfileWidget extends AppWidgetProvider {
 
-    private static final String PROFILE_BUTTON = "profile_button";
     private static final String LIST_ITEM_CLICK = "list_item";
 
     private static final String ITEM_ARG = "item_extra";
@@ -51,19 +49,19 @@ public class ProfileWidget extends AppWidgetProvider {
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         super.onUpdate(context, appWidgetManager, appWidgetIds);
 
-        for (int appWidgetId : appWidgetIds) {
-            Intent svcIntent = new Intent(context, WidgetService.class);
-            svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-            svcIntent.setData(Uri.parse(svcIntent.toUri(Intent.URI_INTENT_SCHEME)));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+            for (int appWidgetId : appWidgetIds) {
+                Intent svcIntent = new Intent(context, WidgetService.class);
+                svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+                svcIntent.setData(Uri.parse(svcIntent.toUri(Intent.URI_INTENT_SCHEME)));
 
-            RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.profile_widget_layout);
-            widget.setRemoteAdapter(R.id.profile_list, svcIntent);
+                RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.profile_widget_layout);
+                widget.setRemoteAdapter(R.id.profile_list, svcIntent);
 
-            widget.setPendingIntentTemplate(R.id.profile_list, getPendingIntent(context, LIST_ITEM_CLICK));
-            widget.setOnClickPendingIntent(R.id.profile_button, getPendingIntent(context, PROFILE_BUTTON));
+                widget.setPendingIntentTemplate(R.id.profile_list, getPendingIntent(context, LIST_ITEM_CLICK));
 
-            appWidgetManager.updateAppWidget(appWidgetId, widget);
-        }
+                appWidgetManager.updateAppWidget(appWidgetId, widget);
+            }
 
     }
 
@@ -75,15 +73,7 @@ public class ProfileWidget extends AppWidgetProvider {
 
     @Override
     public void onReceive(@NonNull final Context context, @NonNull Intent intent) {
-        if (intent.getAction().equals(PROFILE_BUTTON)) {
-            Bundle args = new Bundle();
-            args.putString(MainActivity.LAUNCH_INTENT, ProfileFragment.class.getSimpleName());
-            Intent launch = new Intent(context, MainActivity.class);
-            launch.putExtras(args);
-            launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            MainActivity.destroy();
-            context.startActivity(launch);
-        } else if (intent.getAction().equals(LIST_ITEM_CLICK)) {
+        if (intent.getAction().equals(LIST_ITEM_CLICK)) {
             if (!Utils.getBoolean("profileclicked", false, context)) {
                 Utils.saveBoolean("profileclicked", true, context);
                 Utils.toast(context.getString(R.string.press_again_to_apply), context);

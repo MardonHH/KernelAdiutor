@@ -19,13 +19,13 @@ package com.grarak.cardview;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
-import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.CardView;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.grarak.kerneladiutor.R;
 import com.grarak.kerneladiutor.utils.Utils;
@@ -35,17 +35,23 @@ import com.grarak.kerneladiutor.utils.Utils;
  */
 public abstract class BaseCardView extends CardView {
 
+    /**
+     * Default layout
+     */
     private static final int DEFAULT_LAYOUT = R.layout.inner_cardview;
 
-    protected View layoutView;
+    /**
+     * Views
+     */
+    protected final View layoutView;
 
     private HeaderCardView headerCardView;
-    private LinearLayout headerLayout;
+    private final LinearLayout headerLayout;
 
-    private AppCompatTextView innerView;
-    private String mTitle;
+    private TextView innerView;
+    private CharSequence mTitle;
 
-    protected LinearLayout customLayout;
+    protected final LinearLayout customLayout;
     private View customView;
 
     public BaseCardView(Context context) {
@@ -63,19 +69,23 @@ public abstract class BaseCardView extends CardView {
     public BaseCardView(Context context, AttributeSet attributeSet, int layout) {
         super(context, attributeSet);
 
-        int density = (int) getResources().getDisplayMetrics().density;
-        LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        layoutParams.setMargins(4 * density, 2 * density, 4 * density, 2 * density);
-        setLayoutParams(layoutParams);
-        setRadius(2 * density);
+        // Add a margin
+        setMargin();
 
+        // Make a rounded card
+        setRadius();
+
+        // Set background color depending on the current theme
         setCardBackgroundColor(getResources().getColor(Utils.DARKTHEME ?
                 R.color.card_background_dark : R.color.card_background_light));
+
+        // This will enable the touch feedback of the card
         TypedArray ta = getContext().obtainStyledAttributes(new int[]{R.attr.selectableItemBackground});
         Drawable d = ta.getDrawable(0);
         ta.recycle();
         setForeground(d);
 
+        // Add the base view
         View view = LayoutInflater.from(getContext()).inflate(R.layout.base_cardview, null, false);
         addView(view);
 
@@ -86,27 +96,75 @@ public abstract class BaseCardView extends CardView {
         LinearLayout innerLayout = (LinearLayout) view.findViewById(R.id.inner_layout);
         customLayout = (LinearLayout) view.findViewById(R.id.custom_layout);
 
+        // Inflate the innerlayout
         layoutView = LayoutInflater.from(getContext()).inflate(layout, null, false);
+
+        // If sub class overwrites the default layout then don't try to get the TextView
         if (layout == DEFAULT_LAYOUT) {
-            innerView = (AppCompatTextView) layoutView.findViewById(R.id.inner_view);
+            innerView = (TextView) layoutView.findViewById(R.id.inner_view);
             if (mTitle != null) innerView.setText(mTitle);
         } else setUpInnerLayout(layoutView);
 
+        // Add innerlayout to base view
         innerLayout.addView(layoutView);
+        if (Utils.isTV(getContext())) setFocus();
     }
 
+    /**
+     * Use a function to set margins, so child class can overwrite it
+     */
+    public void setMargin() {
+        int padding = getResources().getDimensionPixelSize(R.dimen.basecard_padding);
+        LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        layoutParams.setMargins(padding, padding, padding, 0);
+        setLayoutParams(layoutParams);
+    }
+
+    public void setFocus() {
+        setFocusable(true);
+        setFocusableInTouchMode(true);
+    }
+
+    /**
+     * Use a function to set radius, so child class can overwrite it
+     */
+    public void setRadius() {
+        setRadius(getResources().getDimensionPixelSize(R.dimen.basecard_radius));
+    }
+
+    /**
+     * Will get executed if sub class overwrites the default layout
+     * to use a custom one
+     *
+     * @param view is the parent innerlayout of the custom layout
+     */
     public abstract void setUpInnerLayout(View view);
 
-    public void setText(String mTitle) {
+    /**
+     * Sets the string value of TextView in innerlayout
+     *
+     * @param mTitle new Text of the card
+     */
+    public void setText(CharSequence mTitle) {
         this.mTitle = mTitle;
         if (innerView != null) innerView.setText(mTitle);
     }
 
+    /**
+     * Replaces the innerlayout with a custom view
+     *
+     * @param view new View of the card
+     */
     public void setView(View view) {
         customView = view;
         setUpCustomLayout();
     }
 
+    /**
+     * Add a header to the card
+     *
+     * @param headerCardView new Header of the card
+     */
     public void addHeader(HeaderCardView headerCardView) {
         this.headerCardView = headerCardView;
         setUpHeader();
@@ -138,6 +196,10 @@ public abstract class BaseCardView extends CardView {
             } catch (NullPointerException ignored) {
             }
             customLayout.addView(customView);
+            if (Utils.isTV(getContext())) {
+                setFocusable(false);
+                setFocusableInTouchMode(false);
+            }
         }
     }
 

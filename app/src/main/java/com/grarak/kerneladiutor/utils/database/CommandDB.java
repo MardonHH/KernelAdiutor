@@ -29,8 +29,13 @@ import java.util.List;
  */
 public class CommandDB extends JsonDB {
 
+    /**
+     * Read the JSON file from cache
+     *
+     * @param context needed to get the cache directory
+     */
     public CommandDB(Context context) {
-        super(context.getCacheDir() + "/commands.json", 1);
+        super(context.getFilesDir() + "/commands.json", 1);
     }
 
     @Override

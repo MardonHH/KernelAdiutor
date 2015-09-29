@@ -20,11 +20,12 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.grarak.kerneladiutor.R;
-import com.grarak.kerneladiutor.elements.DividerCardView;
-import com.grarak.kerneladiutor.elements.EditTextCardView;
-import com.grarak.kerneladiutor.elements.PopupCardItem;
-import com.grarak.kerneladiutor.elements.SeekBarCardView;
-import com.grarak.kerneladiutor.elements.SwitchCardView;
+import com.grarak.kerneladiutor.elements.DAdapter;
+import com.grarak.kerneladiutor.elements.DDivider;
+import com.grarak.kerneladiutor.elements.cards.EditTextCardView;
+import com.grarak.kerneladiutor.elements.cards.PopupCardView;
+import com.grarak.kerneladiutor.elements.cards.SeekBarCardView;
+import com.grarak.kerneladiutor.elements.cards.SwitchCardView;
 import com.grarak.kerneladiutor.fragments.RecyclerViewFragment;
 import com.grarak.kerneladiutor.utils.Constants;
 import com.grarak.kerneladiutor.utils.Utils;
@@ -37,41 +38,44 @@ import java.util.List;
 /**
  * Created by willi on 02.01.15.
  */
-public class MiscFragment extends RecyclerViewFragment implements PopupCardItem.DPopupCard.OnDPopupCardListener,
-        SeekBarCardView.DSeekBarCardView.OnDSeekBarCardListener,
+public class MiscFragment extends RecyclerViewFragment implements PopupCardView.DPopupCard.OnDPopupCardListener,
+        SeekBarCardView.DSeekBarCard.OnDSeekBarCardListener,
         SwitchCardView.DSwitchCard.OnDSwitchCardListener,
         EditTextCardView.DEditTextCard.OnDEditTextCardListener {
 
-    private SeekBarCardView.DSeekBarCardView mVibrationCard;
-
-    private SwitchCardView.DSwitchCard mSmb135xWakeLockCard;
-    private SwitchCardView.DSwitchCard mSensorIndWakeLockCard;
-    private SwitchCardView.DSwitchCard mMsmHsicHostWakeLockCard;
+    private SeekBarCardView.DSeekBarCard mVibrationCard;
 
     private SwitchCardView.DSwitchCard mLoggerEnableCard;
 
     private SwitchCardView.DSwitchCard mFsyncCard;
     private SwitchCardView.DSwitchCard mDynamicFsyncCard;
 
-    private PopupCardItem.DPopupCard mPowerSuspendModeCard;
+    private PopupCardView.DPopupCard mPowerSuspendModeCard;
     private SwitchCardView.DSwitchCard mOldPowerSuspendStateCard;
-    private SeekBarCardView.DSeekBarCardView mNewPowerSuspendStateCard;
+    private SeekBarCardView.DSeekBarCard mNewPowerSuspendStateCard;
 
-    private PopupCardItem.DPopupCard mTcpCongestionCard;
+    private PopupCardView.DPopupCard mTcpCongestionCard;
     private EditTextCardView.DEditTextCard mHostnameCard;
+
+    private SwitchCardView.DSwitchCard mSmb135xWakeLockCard;
+    private SwitchCardView.DSwitchCard mSensorIndWakeLockCard;
+    private SwitchCardView.DSwitchCard mMsmHsicHostWakeLockCard;
+    private SwitchCardView.DSwitchCard mWlanrxWakelockCard;
+    private SwitchCardView.DSwitchCard mWlanctrlWakelockCard;
+    private SwitchCardView.DSwitchCard mWlanWakelockCard;
+    private SeekBarCardView.DSeekBarCard mWlanrxWakelockDividerCard;
+    private SeekBarCardView.DSeekBarCard mMsmHsicWakelockDividerCard;
 
     @Override
     public void init(Bundle savedInstanceState) {
         super.init(savedInstanceState);
 
         if (Misc.hasVibration()) vibrationInit();
-        if (Misc.hasSmb135xWakeLock()) smb135xWakeLockInit();
-        if (Misc.hasSensorIndWakeLock()) sensorIndWakeLockInit();
-        if (Misc.hasMsmHsicHostWakeLock()) msmHsicHostWakeLockInit();
         if (Misc.hasLoggerEnable()) loggerInit();
         fsyncInit();
         if (Misc.hasPowerSuspend()) powersuspendInit();
         networkInit();
+        wakelockInit();
     }
 
     private void vibrationInit() {
@@ -83,42 +87,12 @@ public class MiscFragment extends RecyclerViewFragment implements PopupCardItem.
         int min = Misc.getVibrationMin();
         float offset = (max - min) / (float) 101;
 
-        mVibrationCard = new SeekBarCardView.DSeekBarCardView(list);
+        mVibrationCard = new SeekBarCardView.DSeekBarCard(list);
         mVibrationCard.setTitle(getString(R.string.vibration_strength));
         mVibrationCard.setProgress(Math.round((Misc.getCurVibration() - min) / offset));
         mVibrationCard.setOnDSeekBarCardListener(this);
 
         addView(mVibrationCard);
-    }
-
-    private void smb135xWakeLockInit() {
-        mSmb135xWakeLockCard = new SwitchCardView.DSwitchCard();
-        mSmb135xWakeLockCard.setTitle(getString(R.string.smb135x_wakelock));
-        mSmb135xWakeLockCard.setDescription(getString(R.string.smb135x_wakelock_summary));
-        mSmb135xWakeLockCard.setChecked(Misc.isSmb135xWakeLockActive());
-        mSmb135xWakeLockCard.setOnDSwitchCardListener(this);
-
-        addView(mSmb135xWakeLockCard);
-    }
-
-    private void sensorIndWakeLockInit() {
-        mSensorIndWakeLockCard = new SwitchCardView.DSwitchCard();
-        mSensorIndWakeLockCard.setTitle(getString(R.string.sensor_ind_wakelock));
-        mSensorIndWakeLockCard.setDescription(getString(R.string.sensor_ind_wakelock_summary));
-        mSensorIndWakeLockCard.setChecked(Misc.isSensorIndWakeLockActive());
-        mSensorIndWakeLockCard.setOnDSwitchCardListener(this);
-
-        addView(mSensorIndWakeLockCard);
-    }
-
-    private void msmHsicHostWakeLockInit() {
-        mMsmHsicHostWakeLockCard = new SwitchCardView.DSwitchCard();
-        mMsmHsicHostWakeLockCard.setTitle(getString(R.string.msm_hsic_host_wakelock));
-        mMsmHsicHostWakeLockCard.setDescription(getString(R.string.msm_hsic_host_wakelock_summary));
-        mMsmHsicHostWakeLockCard.setChecked(Misc.isMsmHsicHostWakeLockActive());
-        mMsmHsicHostWakeLockCard.setOnDSwitchCardListener(this);
-
-        addView(mMsmHsicHostWakeLockCard);
     }
 
     private void loggerInit() {
@@ -155,7 +129,7 @@ public class MiscFragment extends RecyclerViewFragment implements PopupCardItem.
 
     private void powersuspendInit() {
         if (Misc.hasPowerSuspendMode()) {
-            mPowerSuspendModeCard = new PopupCardItem.DPopupCard(new ArrayList<>(
+            mPowerSuspendModeCard = new PopupCardView.DPopupCard(new ArrayList<>(
                     Arrays.asList(getResources().getStringArray(R.array.powersuspend_items))));
             mPowerSuspendModeCard.setTitle(getString(R.string.power_suspend_mode));
             mPowerSuspendModeCard.setDescription(getString(R.string.power_suspend_mode_summary));
@@ -180,7 +154,7 @@ public class MiscFragment extends RecyclerViewFragment implements PopupCardItem.
             for (int i = 0; i < 3; i++)
                 list.add(String.valueOf(i));
 
-            mNewPowerSuspendStateCard = new SeekBarCardView.DSeekBarCardView(list);
+            mNewPowerSuspendStateCard = new SeekBarCardView.DSeekBarCard(list);
             mNewPowerSuspendStateCard.setTitle(getString(R.string.power_suspend_state));
             mNewPowerSuspendStateCard.setDescription(getString(R.string.power_suspend_state_summary));
             mNewPowerSuspendStateCard.setProgress(Misc.getNewPowerSuspendState());
@@ -191,12 +165,12 @@ public class MiscFragment extends RecyclerViewFragment implements PopupCardItem.
     }
 
     private void networkInit() {
-        DividerCardView.DDividerCard mNetworkDividerCard = new DividerCardView.DDividerCard();
+        DDivider mNetworkDividerCard = new DDivider();
         mNetworkDividerCard.setText(getString(R.string.network));
         addView(mNetworkDividerCard);
 
         try {
-            mTcpCongestionCard = new PopupCardItem.DPopupCard(Misc.getTcpAvailableCongestions());
+            mTcpCongestionCard = new PopupCardView.DPopupCard(Misc.getTcpAvailableCongestions());
             mTcpCongestionCard.setTitle(getString(R.string.tcp));
             mTcpCongestionCard.setDescription(getString(R.string.tcp_summary));
             mTcpCongestionCard.setItem(Misc.getCurTcpCongestion());
@@ -217,8 +191,106 @@ public class MiscFragment extends RecyclerViewFragment implements PopupCardItem.
         addView(mHostnameCard);
     }
 
+    private void wakelockInit() {
+        List<DAdapter.DView> views = new ArrayList<>();
+
+        if (Misc.hasSmb135xWakeLock()) {
+            mSmb135xWakeLockCard = new SwitchCardView.DSwitchCard();
+            mSmb135xWakeLockCard.setTitle(getString(R.string.smb135x_wakelock));
+            mSmb135xWakeLockCard.setDescription(getString(R.string.smb135x_wakelock_summary));
+            mSmb135xWakeLockCard.setChecked(Misc.isSmb135xWakeLockActive());
+            mSmb135xWakeLockCard.setOnDSwitchCardListener(this);
+
+            views.add(mSmb135xWakeLockCard);
+        }
+
+        if (Misc.hasSensorIndWakeLock()) {
+            mSensorIndWakeLockCard = new SwitchCardView.DSwitchCard();
+            mSensorIndWakeLockCard.setTitle(getString(R.string.sensor_ind_wakelock));
+            mSensorIndWakeLockCard.setDescription(getString(R.string.sensor_ind_wakelock_summary));
+            mSensorIndWakeLockCard.setChecked(Misc.isSensorIndWakeLockActive());
+            mSensorIndWakeLockCard.setOnDSwitchCardListener(this);
+
+            views.add(mSensorIndWakeLockCard);
+        }
+
+        if (Misc.hasMsmHsicHostWakeLock()) {
+            mMsmHsicHostWakeLockCard = new SwitchCardView.DSwitchCard();
+            mMsmHsicHostWakeLockCard.setTitle(getString(R.string.msm_hsic_host_wakelock));
+            mMsmHsicHostWakeLockCard.setDescription(getString(R.string.msm_hsic_host_wakelock_summary));
+            mMsmHsicHostWakeLockCard.setChecked(Misc.isMsmHsicHostWakeLockActive());
+            mMsmHsicHostWakeLockCard.setOnDSwitchCardListener(this);
+
+            views.add(mMsmHsicHostWakeLockCard);
+        }
+
+        if (Misc.hasWlanrxWakeLock()) {
+            mWlanrxWakelockCard = new SwitchCardView.DSwitchCard();
+            mWlanrxWakelockCard.setTitle(getString(R.string.wlan_rx_wakelock));
+            mWlanrxWakelockCard.setDescription(getString(R.string.wlan_rx_wakelock_summary));
+            mWlanrxWakelockCard.setChecked(Misc.isWlanrxWakeLockActive());
+            mWlanrxWakelockCard.setOnDSwitchCardListener(this);
+
+            views.add(mWlanrxWakelockCard);
+        }
+
+        if (Misc.hasWlanctrlWakeLock()) {
+            mWlanctrlWakelockCard = new SwitchCardView.DSwitchCard();
+            mWlanctrlWakelockCard.setTitle(getString(R.string.wlan_ctrl_wakelock));
+            mWlanctrlWakelockCard.setDescription(getString(R.string.wlan_ctrl_wakelock_summary));
+            mWlanctrlWakelockCard.setChecked(Misc.isWlanctrlWakeLockActive());
+            mWlanctrlWakelockCard.setOnDSwitchCardListener(this);
+
+            views.add(mWlanctrlWakelockCard);
+        }
+
+        if (Misc.hasWlanWakeLock()) {
+            mWlanWakelockCard = new SwitchCardView.DSwitchCard();
+            mWlanWakelockCard.setTitle(getString(R.string.wlan_wakelock));
+            mWlanWakelockCard.setDescription(getString(R.string.wlan_wakelock_summary));
+            mWlanWakelockCard.setChecked(Misc.isWlanWakeLockActive());
+            mWlanWakelockCard.setOnDSwitchCardListener(this);
+
+            views.add(mWlanWakelockCard);
+        }
+
+        if (Misc.hasWlanrxWakelockDivider()) {
+            List<String> list = new ArrayList<>();
+            for (int i = 1; i < 17; i++) list.add((100 / i) + "%");
+            list.add("0%");
+
+            mWlanrxWakelockDividerCard = new SeekBarCardView.DSeekBarCard(list);
+            mWlanrxWakelockDividerCard.setTitle(getString(R.string.wlan_rx_wakelock_divider));
+            mWlanrxWakelockDividerCard.setProgress(Misc.getWlanrxWakelockDivider());
+            mWlanrxWakelockDividerCard.setOnDSeekBarCardListener(this);
+
+            views.add(mWlanrxWakelockDividerCard);
+        }
+
+        if (Misc.hasMsmHsicWakelockDivider()) {
+            List<String> list = new ArrayList<>();
+            for (int i = 1; i < 17; i++) list.add((100 / i) + "%");
+            list.add("0%");
+
+            mMsmHsicWakelockDividerCard = new SeekBarCardView.DSeekBarCard(list);
+            mMsmHsicWakelockDividerCard.setTitle(getString(R.string.msm_hsic_wakelock_divider));
+            mMsmHsicWakelockDividerCard.setProgress(Misc.getMsmHsicWakelockDivider());
+            mMsmHsicWakelockDividerCard.setOnDSeekBarCardListener(this);
+
+            views.add(mMsmHsicWakelockDividerCard);
+        }
+
+        if (!views.isEmpty()) {
+            DDivider mWakelockDividerCard = new DDivider();
+            mWakelockDividerCard.setText(getString(R.string.wakelock));
+            addView(mWakelockDividerCard);
+
+            addAllViews(views);
+        }
+    }
+
     @Override
-    public void onItemSelected(PopupCardItem.DPopupCard dPopupCard, int position) {
+    public void onItemSelected(PopupCardView.DPopupCard dPopupCard, int position) {
         if (dPopupCard == mTcpCongestionCard)
             Misc.setTcpCongestion(Misc.getTcpAvailableCongestions().get(position), getActivity());
         else if (dPopupCard == mPowerSuspendModeCard)
@@ -226,12 +298,12 @@ public class MiscFragment extends RecyclerViewFragment implements PopupCardItem.
     }
 
     @Override
-    public void onChanged(SeekBarCardView.DSeekBarCardView dSeekBarCardView, int position) {
+    public void onChanged(SeekBarCardView.DSeekBarCard dSeekBarCard, int position) {
     }
 
     @Override
-    public void onStop(SeekBarCardView.DSeekBarCardView dSeekBarCardView, int position) {
-        if (dSeekBarCardView == mVibrationCard) {
+    public void onStop(SeekBarCardView.DSeekBarCard dSeekBarCard, int position) {
+        if (dSeekBarCard == mVibrationCard) {
             int max = Misc.getVibrationMax();
             int min = Misc.getVibrationMin();
             float offset = (max - min) / (float) 101;
@@ -249,21 +321,19 @@ public class MiscFragment extends RecyclerViewFragment implements PopupCardItem.
                     }
                 }
             }).start();
-        } else if (dSeekBarCardView == mNewPowerSuspendStateCard)
+        } else if (dSeekBarCard == mNewPowerSuspendStateCard)
             if (Misc.getPowerSuspendMode() == 1) {
                 Misc.setNewPowerSuspend(position, getActivity());
-            } else dSeekBarCardView.setProgress(Misc.getNewPowerSuspendState());
+            } else dSeekBarCard.setProgress(Misc.getNewPowerSuspendState());
+        else if (dSeekBarCard == mWlanrxWakelockDividerCard)
+            Misc.setWlanrxWakelockDivider(position, getActivity());
+        else if (dSeekBarCard == mMsmHsicWakelockDividerCard)
+            Misc.setMsmHsicWakelockDivider(position, getActivity());
     }
 
     @Override
     public void onChecked(SwitchCardView.DSwitchCard dSwitchCard, boolean checked) {
-        if (dSwitchCard == mSmb135xWakeLockCard)
-            Misc.activateSmb135xWakeLock(checked, getActivity());
-        else if (dSwitchCard == mSensorIndWakeLockCard)
-            Misc.activateSensorIndWakeLock(checked, getActivity());
-        else if (dSwitchCard == mMsmHsicHostWakeLockCard)
-            Misc.activateMsmHsicHostWakeLock(checked, getActivity());
-        else if (dSwitchCard == mLoggerEnableCard)
+        if (dSwitchCard == mLoggerEnableCard)
             Misc.activateLogger(checked, getActivity());
         else if (dSwitchCard == mFsyncCard)
             Misc.activateFsync(checked, getActivity());
@@ -273,6 +343,18 @@ public class MiscFragment extends RecyclerViewFragment implements PopupCardItem.
             if (Misc.getPowerSuspendMode() == 1) {
                 Misc.activateOldPowerSuspend(checked, getActivity());
             } else dSwitchCard.setChecked(Misc.isOldPowerSuspendStateActive());
+        else if (dSwitchCard == mSmb135xWakeLockCard)
+            Misc.activateSmb135xWakeLock(checked, getActivity());
+        else if (dSwitchCard == mSensorIndWakeLockCard)
+            Misc.activateSensorIndWakeLock(checked, getActivity());
+        else if (dSwitchCard == mMsmHsicHostWakeLockCard)
+            Misc.activateMsmHsicHostWakeLock(checked, getActivity());
+        else if (dSwitchCard == mWlanrxWakelockCard)
+            Misc.activateWlanrxWakeLock(checked, getActivity());
+        else if (dSwitchCard == mWlanctrlWakelockCard)
+            Misc.activateWlanctrlWakeLock(checked, getActivity());
+        else if (dSwitchCard == mWlanWakelockCard)
+            Misc.activateWlanWakeLock(checked, getActivity());
     }
 
     @Override

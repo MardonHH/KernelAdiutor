@@ -25,20 +25,21 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.grarak.kerneladiutor.R;
-import com.grarak.kerneladiutor.elements.CardViewItem;
 import com.grarak.kerneladiutor.elements.ColorPalette;
 import com.grarak.kerneladiutor.elements.DAdapter;
-import com.grarak.kerneladiutor.elements.DividerCardView;
-import com.grarak.kerneladiutor.elements.EditTextCardView;
-import com.grarak.kerneladiutor.elements.PopupCardItem;
-import com.grarak.kerneladiutor.elements.SeekBarCardView;
-import com.grarak.kerneladiutor.elements.SwitchCardView;
+import com.grarak.kerneladiutor.elements.DDivider;
+import com.grarak.kerneladiutor.elements.cards.CardViewItem;
+import com.grarak.kerneladiutor.elements.cards.EditTextCardView;
+import com.grarak.kerneladiutor.elements.cards.PopupCardView;
+import com.grarak.kerneladiutor.elements.cards.SeekBarCardView;
+import com.grarak.kerneladiutor.elements.cards.SwitchCardView;
 import com.grarak.kerneladiutor.fragments.RecyclerViewFragment;
 import com.grarak.kerneladiutor.utils.Constants;
-import com.grarak.kerneladiutor.utils.GammaProfiles;
 import com.grarak.kerneladiutor.utils.Utils;
 import com.grarak.kerneladiutor.utils.WebpageReader;
+import com.grarak.kerneladiutor.utils.json.GammaProfiles;
 import com.grarak.kerneladiutor.utils.kernel.Screen;
+import com.kerneladiutor.library.Tools;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,27 +47,27 @@ import java.util.List;
 /**
  * Created by willi on 26.12.14.
  */
-public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardView.DSeekBarCardView.OnDSeekBarCardListener,
+public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardView.DSeekBarCard.OnDSeekBarCardListener,
         SwitchCardView.DSwitchCard.OnDSwitchCardListener, EditTextCardView.DEditTextCard.OnDEditTextCardListener,
-        PopupCardItem.DPopupCard.OnDPopupCardListener, CardViewItem.DCardView.OnDCardListener {
+        PopupCardView.DPopupCard.OnDPopupCardListener, CardViewItem.DCardView.OnDCardListener {
 
     private ColorPalette mColorPalette;
 
     private List<String> mColorCalibrationLimits;
-    private SeekBarCardView.DSeekBarCardView[] mColorCalibrationCard;
-    private SeekBarCardView.DSeekBarCardView mColorCalibrationMinCard;
+    private SeekBarCardView.DSeekBarCard[] mColorCalibrationCard;
+    private SeekBarCardView.DSeekBarCard mColorCalibrationMinCard;
     private SwitchCardView.DSwitchCard mInvertScreenCard;
-    private SeekBarCardView.DSeekBarCardView mSaturationIntensityCard;
+    private SeekBarCardView.DSeekBarCard mSaturationIntensityCard;
     private SwitchCardView.DSwitchCard mGrayscaleModeCard;
-    private SeekBarCardView.DSeekBarCardView mScreenHueCard;
-    private SeekBarCardView.DSeekBarCardView mScreenValueCard;
-    private SeekBarCardView.DSeekBarCardView mScreenContrastCard;
+    private SeekBarCardView.DSeekBarCard mScreenHueCard;
+    private SeekBarCardView.DSeekBarCard mScreenValueCard;
+    private SeekBarCardView.DSeekBarCard mScreenContrastCard;
     private SwitchCardView.DSwitchCard mScreenHBMCard;
 
     private EditTextCardView.DEditTextCard mKGammaBlueCard;
     private EditTextCardView.DEditTextCard mKGammaGreenCard;
     private EditTextCardView.DEditTextCard mKGammaRedCard;
-    private PopupCardItem.DPopupCard mKGammaProfilesCard;
+    private PopupCardView.DPopupCard mKGammaProfilesCard;
 
     private EditTextCardView.DEditTextCard mGammaControlRedGreysCard;
     private EditTextCardView.DEditTextCard mGammaControlRedMidsCard;
@@ -83,7 +84,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
     private EditTextCardView.DEditTextCard mGammaControlContrastCard;
     private EditTextCardView.DEditTextCard mGammaControlBrightnessCard;
     private EditTextCardView.DEditTextCard mGammaControlSaturationCard;
-    private PopupCardItem.DPopupCard mGammaControlProfilesCard;
+    private PopupCardView.DPopupCard mGammaControlProfilesCard;
 
     private EditTextCardView.DEditTextCard mDsiPanelBlueNegativeCard;
     private EditTextCardView.DEditTextCard mDsiPanelBluePositiveCard;
@@ -92,23 +93,25 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
     private EditTextCardView.DEditTextCard mDsiPanelRedNegativeCard;
     private EditTextCardView.DEditTextCard mDsiPanelRedPositiveCard;
     private EditTextCardView.DEditTextCard mDsiPanelWhitePointCard;
-    private PopupCardItem.DPopupCard mDsiPanelProfilesCard;
+    private PopupCardView.DPopupCard mDsiPanelProfilesCard;
 
     private CardViewItem.DCardView mAdditionalProfilesCard;
 
     private SwitchCardView.DSwitchCard mBrightnessModeCard;
-    private SeekBarCardView.DSeekBarCardView mLcdMinBrightnessCard;
-    private SeekBarCardView.DSeekBarCardView mLcdMaxBrightnessCard;
+    private SeekBarCardView.DSeekBarCard mLcdMinBrightnessCard;
+    private SeekBarCardView.DSeekBarCard mLcdMaxBrightnessCard;
 
     private SwitchCardView.DSwitchCard mBackLightDimmerEnableCard;
-    private SeekBarCardView.DSeekBarCardView mBackLightDimmerMinBrightnessCard;
-    private SeekBarCardView.DSeekBarCardView mBackLightDimmerThresholdCard;
-    private SeekBarCardView.DSeekBarCardView mBackLightDimmerOffsetCard;
+    private SeekBarCardView.DSeekBarCard mBackLightDimmerMinBrightnessCard;
+    private SeekBarCardView.DSeekBarCard mBackLightDimmerThresholdCard;
+    private SeekBarCardView.DSeekBarCard mBackLightDimmerOffsetCard;
 
     private SwitchCardView.DSwitchCard mNegativeToggleCard;
 
     private SwitchCardView.DSwitchCard mRegisterHookCard;
     private SwitchCardView.DSwitchCard mMasterSequenceCard;
+
+    private SwitchCardView.DSwitchCard mGloveModeCard;
 
     @Override
     public RecyclerView getRecyclerView() {
@@ -132,6 +135,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
         backlightDimmerInit();
         if (Screen.hasNegativeToggle()) negativeToggleInit();
         mdnieGlobalInit();
+        if (Screen.hasGloveMode()) gloveModeInit();
     }
 
     @Override
@@ -144,9 +148,9 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
         if (Screen.hasColorCalibration()) {
             List<String> colors = Screen.getColorCalibration();
             mColorCalibrationLimits = Screen.getColorCalibrationLimits();
-            mColorCalibrationCard = new SeekBarCardView.DSeekBarCardView[colors.size()];
+            mColorCalibrationCard = new SeekBarCardView.DSeekBarCard[colors.size()];
             for (int i = 0; i < mColorCalibrationCard.length; i++) {
-                mColorCalibrationCard[i] = new SeekBarCardView.DSeekBarCardView(Screen.getColorCalibrationLimits());
+                mColorCalibrationCard[i] = new SeekBarCardView.DSeekBarCard(Screen.getColorCalibrationLimits());
                 mColorCalibrationCard[i].setTitle(getColor(i));
                 mColorCalibrationCard[i].setProgress(Screen.getColorCalibrationLimits().indexOf(colors.get(i)));
                 mColorCalibrationCard[i].setOnDSeekBarCardListener(this);
@@ -156,7 +160,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
         }
 
         if (Screen.hasColorCalibrationMin() && mColorCalibrationLimits != null) {
-            mColorCalibrationMinCard = new SeekBarCardView.DSeekBarCardView(Screen.getColorCalibrationLimits());
+            mColorCalibrationMinCard = new SeekBarCardView.DSeekBarCard(Screen.getColorCalibrationLimits());
             mColorCalibrationMinCard.setTitle(getString(R.string.min_rgb));
             mColorCalibrationMinCard.setProgress(Screen.getColorCalibrationMin());
             mColorCalibrationMinCard.setOnDSeekBarCardListener(this);
@@ -179,7 +183,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
                 list.add(String.valueOf(i));
 
             int saturation = Screen.getSaturationIntensity();
-            mSaturationIntensityCard = new SeekBarCardView.DSeekBarCardView(list);
+            mSaturationIntensityCard = new SeekBarCardView.DSeekBarCard(list);
             mSaturationIntensityCard.setTitle(getString(R.string.saturation_intensity));
             mSaturationIntensityCard.setProgress(saturation == 128 ? 30 : saturation - 225);
             mSaturationIntensityCard.setEnabled(saturation != 128);
@@ -200,7 +204,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 0; i < 1537; i++)
                 list.add(String.valueOf(i));
 
-            mScreenHueCard = new SeekBarCardView.DSeekBarCardView(list);
+            mScreenHueCard = new SeekBarCardView.DSeekBarCard(list);
             mScreenHueCard.setTitle(getString(R.string.screen_hue));
             mScreenHueCard.setDescription(getString(R.string.screen_hue_summary));
             mScreenHueCard.setProgress(Screen.getScreenHue());
@@ -214,7 +218,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 0; i < 256; i++)
                 list.add(String.valueOf(i));
 
-            mScreenValueCard = new SeekBarCardView.DSeekBarCardView(list);
+            mScreenValueCard = new SeekBarCardView.DSeekBarCard(list);
             mScreenValueCard.setTitle(getString(R.string.screen_value));
             mScreenValueCard.setProgress(Screen.getScreenValue() - 128);
             mScreenValueCard.setOnDSeekBarCardListener(this);
@@ -227,7 +231,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 0; i < 256; i++)
                 list.add(String.valueOf(i));
 
-            mScreenContrastCard = new SeekBarCardView.DSeekBarCardView(list);
+            mScreenContrastCard = new SeekBarCardView.DSeekBarCard(list);
             mScreenContrastCard.setTitle(getString(R.string.screen_contrast));
             mScreenContrastCard.setProgress(Screen.getScreenContrast() - 128);
             mScreenContrastCard.setOnDSeekBarCardListener(this);
@@ -246,7 +250,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
     }
 
     private void kgammaInit() {
-        DividerCardView.DDividerCard mKGammaDividerCard = new DividerCardView.DDividerCard();
+        DDivider mKGammaDividerCard = new DDivider();
         mKGammaDividerCard.setText(getString(R.string.gamma));
         addView(mKGammaDividerCard);
 
@@ -283,7 +287,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 0; i < kGammaProfiles.length(); i++)
                 list.add(kGammaProfiles.getName(i));
 
-            mKGammaProfilesCard = new PopupCardItem.DPopupCard(list);
+            mKGammaProfilesCard = new PopupCardView.DPopupCard(list);
             mKGammaProfilesCard.setTitle(getString(R.string.gamma_profile));
             mKGammaProfilesCard.setDescription(getString(R.string.gamma_profile_summary));
             mKGammaProfilesCard.setItem("");
@@ -294,7 +298,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
     }
 
     private void gammacontrolInit() {
-        DividerCardView.DDividerCard mKGammaDividerCard = new DividerCardView.DDividerCard();
+        DDivider mKGammaDividerCard = new DDivider();
         mKGammaDividerCard.setText(getString(R.string.gamma));
         addView(mKGammaDividerCard);
 
@@ -439,7 +443,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 0; i < gammaControlProfiles.length(); i++)
                 list.add(gammaControlProfiles.getName(i));
 
-            mGammaControlProfilesCard = new PopupCardItem.DPopupCard(list);
+            mGammaControlProfilesCard = new PopupCardView.DPopupCard(list);
             mGammaControlProfilesCard.setTitle(getString(R.string.gamma_profile));
             mGammaControlProfilesCard.setDescription(getString(R.string.gamma_profile_summary));
             mGammaControlProfilesCard.setItem("");
@@ -450,7 +454,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
     }
 
     private void dsipanelInit() {
-        DividerCardView.DDividerCard mKGammaDividerCard = new DividerCardView.DDividerCard();
+        DDivider mKGammaDividerCard = new DDivider();
         mKGammaDividerCard.setText(getString(R.string.gamma));
         addView(mKGammaDividerCard);
 
@@ -523,7 +527,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 0; i < dsiPanelProfiles.length(); i++)
                 list.add(dsiPanelProfiles.getName(i));
 
-            mDsiPanelProfilesCard = new PopupCardItem.DPopupCard(list);
+            mDsiPanelProfilesCard = new PopupCardView.DPopupCard(list);
             mDsiPanelProfilesCard.setTitle(getString(R.string.gamma_profile));
             mDsiPanelProfilesCard.setDescription(getString(R.string.gamma_profile_summary));
             mDsiPanelProfilesCard.setItem("");
@@ -559,7 +563,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 2; i < 115; i++)
                 list.add(String.valueOf(i));
 
-            mLcdMinBrightnessCard = new SeekBarCardView.DSeekBarCardView(list);
+            mLcdMinBrightnessCard = new SeekBarCardView.DSeekBarCard(list);
             mLcdMinBrightnessCard.setTitle(getString(R.string.min_brightness));
             mLcdMinBrightnessCard.setDescription(getString(R.string.min_brightness_summary));
             mLcdMinBrightnessCard.setProgress(Screen.getLcdMinBrightness() - 2);
@@ -573,7 +577,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 2; i < 115; i++)
                 list.add(String.valueOf(i));
 
-            mLcdMaxBrightnessCard = new SeekBarCardView.DSeekBarCardView(list);
+            mLcdMaxBrightnessCard = new SeekBarCardView.DSeekBarCard(list);
             mLcdMaxBrightnessCard.setTitle(getString(R.string.max_brightness));
             mLcdMaxBrightnessCard.setDescription(getString(R.string.max_brightness_summary));
             mLcdMaxBrightnessCard.setProgress(Screen.getLcdMaxBrightness() - 2);
@@ -583,7 +587,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
         }
 
         if (views.size() > 0) {
-            DividerCardView.DDividerCard mLcdBackLightDividerCard = new DividerCardView.DDividerCard();
+            DDivider mLcdBackLightDividerCard = new DDivider();
             mLcdBackLightDividerCard.setText(getString(R.string.lcd_backlight));
             addView(mLcdBackLightDividerCard);
 
@@ -608,7 +612,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 0; i <= Screen.getMaxMinBrightness(); i++)
                 list.add(String.valueOf(i));
 
-            mBackLightDimmerMinBrightnessCard = new SeekBarCardView.DSeekBarCardView(list);
+            mBackLightDimmerMinBrightnessCard = new SeekBarCardView.DSeekBarCard(list);
             mBackLightDimmerMinBrightnessCard.setTitle(getString(R.string.min_brightness));
             mBackLightDimmerMinBrightnessCard.setDescription(getString(R.string.min_brightness_summary));
             mBackLightDimmerMinBrightnessCard.setProgress(Screen.getCurMinBrightness());
@@ -622,7 +626,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 0; i < 51; i++)
                 list.add(String.valueOf(i));
 
-            mBackLightDimmerThresholdCard = new SeekBarCardView.DSeekBarCardView(list);
+            mBackLightDimmerThresholdCard = new SeekBarCardView.DSeekBarCard(list);
             mBackLightDimmerThresholdCard.setTitle(getString(R.string.threshold));
             mBackLightDimmerThresholdCard.setProgress(Screen.getBackLightDimmerThreshold());
             mBackLightDimmerThresholdCard.setOnDSeekBarCardListener(this);
@@ -635,7 +639,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             for (int i = 0; i < 51; i++)
                 list.add(String.valueOf(i));
 
-            mBackLightDimmerOffsetCard = new SeekBarCardView.DSeekBarCardView(list);
+            mBackLightDimmerOffsetCard = new SeekBarCardView.DSeekBarCard(list);
             mBackLightDimmerOffsetCard.setTitle(getString(R.string.offset));
             mBackLightDimmerOffsetCard.setProgress(Screen.getBackLightDimmerOffset());
             mBackLightDimmerOffsetCard.setOnDSeekBarCardListener(this);
@@ -644,7 +648,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
         }
 
         if (views.size() > 0) {
-            DividerCardView.DDividerCard mBackLightDimmerDividerCard = new DividerCardView.DDividerCard();
+            DDivider mBackLightDimmerDividerCard = new DDivider();
             mBackLightDimmerDividerCard.setText(getString(R.string.backlight_dimmer));
             addView(mBackLightDimmerDividerCard);
 
@@ -687,7 +691,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
         }
 
         if (views.size() > 0) {
-            DividerCardView.DDividerCard mMdnieGlobalDivider = new DividerCardView.DDividerCard();
+            DDivider mMdnieGlobalDivider = new DDivider();
             mMdnieGlobalDivider.setText(getString(R.string.mdnie_global_controls));
             addView(mMdnieGlobalDivider);
 
@@ -695,16 +699,26 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
         }
     }
 
+    private void gloveModeInit() {
+        mGloveModeCard = new SwitchCardView.DSwitchCard();
+        mGloveModeCard.setTitle(getString(R.string.glove_mode));
+        mGloveModeCard.setDescription(getString(R.string.glove_mode_summary));
+        mGloveModeCard.setChecked(Screen.isGloveModeActive());
+        mGloveModeCard.setOnDSwitchCardListener(this);
+
+        addView(mGloveModeCard);
+    }
+
     @Override
-    public void onChanged(SeekBarCardView.DSeekBarCardView dSeekBarCardView, int position) {
-        if (dSeekBarCardView == mColorCalibrationMinCard) {
-            for (SeekBarCardView.DSeekBarCardView seekBarCardView : mColorCalibrationCard)
+    public void onChanged(SeekBarCardView.DSeekBarCard dSeekBarCard, int position) {
+        if (dSeekBarCard == mColorCalibrationMinCard) {
+            for (SeekBarCardView.DSeekBarCard seekBarCardView : mColorCalibrationCard)
                 if (position > seekBarCardView.getProgress())
                     seekBarCardView.setProgress(position);
         } else {
             if (mColorCalibrationCard != null)
-                for (SeekBarCardView.DSeekBarCardView seekBarCardView : mColorCalibrationCard)
-                    if (dSeekBarCardView == seekBarCardView) {
+                for (SeekBarCardView.DSeekBarCard seekBarCardView : mColorCalibrationCard)
+                    if (dSeekBarCard == seekBarCardView) {
                         if (mColorCalibrationMinCard != null)
                             if (position < mColorCalibrationMinCard.getProgress())
                                 mColorCalibrationMinCard.setProgress(position);
@@ -714,40 +728,46 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
     }
 
     @Override
-    public void onStop(SeekBarCardView.DSeekBarCardView dSeekBarCardView, int position) {
-        if (dSeekBarCardView == mColorCalibrationMinCard)
+    public void onStop(SeekBarCardView.DSeekBarCard dSeekBarCard, int position) {
+        if (dSeekBarCard == mColorCalibrationMinCard)
             Screen.setColorCalibrationMin(Utils.stringToInt(mColorCalibrationLimits.get(position)), getActivity());
-        else if (dSeekBarCardView == mSaturationIntensityCard)
+        else if (dSeekBarCard == mSaturationIntensityCard)
             Screen.setSaturationIntensity(position + 225, getActivity());
-        else if (dSeekBarCardView == mScreenHueCard)
+        else if (dSeekBarCard == mScreenHueCard)
             Screen.setScreenHue(position, getActivity());
-        else if (dSeekBarCardView == mScreenValueCard)
+        else if (dSeekBarCard == mScreenValueCard)
             Screen.setScreenValue(position + 128, getActivity());
-        else if (dSeekBarCardView == mScreenContrastCard)
+        else if (dSeekBarCard == mScreenContrastCard)
             Screen.setScreenContrast(position + 128, getActivity());
-        else if (dSeekBarCardView == mLcdMinBrightnessCard)
+        else if (dSeekBarCard == mLcdMinBrightnessCard)
             Screen.setLcdMinBrightness(position + 2, getActivity());
-        else if (dSeekBarCardView == mLcdMaxBrightnessCard)
+        else if (dSeekBarCard == mLcdMaxBrightnessCard)
             Screen.setLcdMaxBrightness(position + 2, getActivity());
-        else if (dSeekBarCardView == mBackLightDimmerMinBrightnessCard)
+        else if (dSeekBarCard == mBackLightDimmerMinBrightnessCard)
             Screen.setMinBrightness(position, getActivity());
-        else if (dSeekBarCardView == mBackLightDimmerThresholdCard)
+        else if (dSeekBarCard == mBackLightDimmerThresholdCard)
             Screen.setBackLightDimmerThreshold(position, getActivity());
-        else if (dSeekBarCardView == mBackLightDimmerOffsetCard)
+        else if (dSeekBarCard == mBackLightDimmerOffsetCard)
             Screen.setBackLightDimmerOffset(position, getActivity());
         else {
-            for (SeekBarCardView.DSeekBarCardView seekBarCardView : mColorCalibrationCard)
-                if (dSeekBarCardView == seekBarCardView) {
+            for (SeekBarCardView.DSeekBarCard seekBarCardView : mColorCalibrationCard)
+                if (dSeekBarCard == seekBarCardView) {
                     if (mColorCalibrationMinCard != null) {
                         int current = Utils.stringToInt(mColorCalibrationLimits.get(position));
                         if (Screen.getColorCalibrationMin() > current)
                             Screen.setColorCalibrationMin(current, getActivity());
                     }
-                    int r = mColorCalibrationCard[0].getProgress();
-                    int g = mColorCalibrationCard[1].getProgress();
-                    int b = mColorCalibrationCard[2].getProgress();
-                    Screen.setColorCalibration(mColorCalibrationLimits.get(r) + " " +
-                            mColorCalibrationLimits.get(g) + " " + mColorCalibrationLimits.get(b), getActivity());
+
+                    try {
+                        int r = mColorCalibrationCard[0].getProgress();
+                        int g = mColorCalibrationCard[1].getProgress();
+                        int b = mColorCalibrationCard[2].getProgress();
+                        Screen.setColorCalibration(mColorCalibrationLimits.get(r) + " " +
+                                mColorCalibrationLimits.get(g) + " " + mColorCalibrationLimits.get(b), getActivity());
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        Utils.errorDialog(getActivity(), e);
+                        e.printStackTrace();
+                    }
                     return;
                 }
         }
@@ -773,6 +793,8 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
             Screen.activateRegisterHook(checked, getActivity());
         else if (dSwitchCard == mMasterSequenceCard)
             Screen.activateMasterSequence(checked, getActivity());
+        else if (dSwitchCard == mGloveModeCard)
+            Screen.activateGloveMode(checked, getActivity());
     }
 
     @Override
@@ -831,7 +853,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
     }
 
     @Override
-    public void onItemSelected(PopupCardItem.DPopupCard dPopupCard, int position) {
+    public void onItemSelected(PopupCardView.DPopupCard dPopupCard, int position) {
         if (dPopupCard == mKGammaProfilesCard) {
             Screen.setKGammaProfile(position, Screen.getKGammaProfiles(getActivity()), getActivity());
             refreshKGamma();
@@ -849,6 +871,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
         if (dCardView == mAdditionalProfilesCard) {
             final ProgressDialog progressDialog = new ProgressDialog(getActivity());
             progressDialog.setMessage(getString(R.string.loading));
+            progressDialog.setCancelable(false);
             progressDialog.show();
             new WebpageReader(new WebpageReader.WebpageCallback() {
                 @Override
@@ -858,7 +881,7 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
                     GammaProfiles gammaProfiles = new GammaProfiles(raw);
                     String path = getActivity().getApplicationContext().getCacheDir() + "/gamma_profiles.json";
                     if (gammaProfiles.readable()) {
-                        Utils.writeFile(path, raw, false);
+                        Tools.writeFile(path, raw, false, false);
                         showMoreGammaProfiles(gammaProfiles);
                     } else {
                         if (Utils.existFile(path)) {
@@ -951,9 +974,11 @@ public class ScreenFragment extends RecyclerViewFragment implements SeekBarCardV
     }
 
     private void refreshGammaControl() {
-        for (int i = 0; i < mColorCalibrationCard.length; i++)
-            mColorCalibrationCard[i].setProgress(Screen.getColorCalibrationLimits()
-                    .indexOf(Screen.getColorCalibration().get(i)));
+        if (mColorCalibrationCard != null)
+            for (int i = 0; i < mColorCalibrationCard.length; i++)
+                if (mColorCalibrationCard[i] != null)
+                    mColorCalibrationCard[i].setProgress(Screen.getColorCalibrationLimits()
+                            .indexOf(Screen.getColorCalibration().get(i)));
 
         String redGreys = Screen.getRedGreys();
         mGammaControlRedGreysCard.setDescription(redGreys);

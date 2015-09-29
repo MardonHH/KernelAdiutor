@@ -3,16 +3,16 @@
 // (C) Brandon Valosek, 2011 <bvalosek@gmail.com>
 //
 //-----------------------------------------------------------------------------
+// Modified by Willi Ye to work with big.LITTLE
 
 package com.bvalosek.cpuspy;
-
-// imports
 
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
 import com.grarak.kerneladiutor.utils.Constants;
 import com.grarak.kerneladiutor.utils.Utils;
+import com.grarak.kerneladiutor.utils.kernel.CPU;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -28,10 +28,16 @@ import java.util.Map;
  * the time-in-state information, as well as allowing the user to set/reset
  * offsets to "restart" the state timers
  */
-public class CpuStateMonitor implements Constants {
+public class CpuStateMonitor {
 
-    private List<CpuState> _states = new ArrayList<>();
+    private final int core;
+
+    private final List<CpuState> _states = new ArrayList<>();
     private Map<Integer, Long> _offsets = new HashMap<>();
+
+    public CpuStateMonitor(int core) {
+        this.core = core;
+    }
 
     /**
      * exception class
@@ -157,7 +163,18 @@ public class CpuStateMonitor implements Constants {
     public void updateStates() throws CpuStateMonitorException {
         _states.clear();
         try {
-            FileReader fileReader = new FileReader(CPU_TIME_STATE);
+            String file;
+            if (Utils.existFile(String.format(Constants.CPU_TIME_STATE, core))) {
+                file = String.format(Constants.CPU_TIME_STATE, core);
+            } else {
+                if (core > 0) {
+                    CPU.activateCore(core, true, null);
+                    file = String.format(Constants.CPU_TIME_STATE_2, core);
+                } else file = String.format(Constants.CPU_TIME_STATE_2, 0);
+            }
+            if (file == null)
+                throw new CpuStateMonitorException("Problem opening time-in-states file");
+            FileReader fileReader = new FileReader(file);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             readInStates(bufferedReader);
             fileReader.close();

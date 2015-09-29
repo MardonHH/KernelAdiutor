@@ -5,56 +5,42 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <RelativeLayout
+    <LinearLayout
+        android:id="@+id/layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+        <include layout="@layout/toolbar" />
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_height="?attr/actionBarSize"
-                android:layout_width="match_parent"
-                android:background="@color/actionbar_color"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                app:contentInsetLeft="72dp"
-                app:contentInsetStart="72dp"
-                android:theme="@style/ActionBarStyle" />
-
-            <FrameLayout
-                android:id="@+id/content_frame"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-        </LinearLayout>
-
-        <com.grarak.kerneladiutor.elements.SplashView
-            android:id="@+id/splash_view"
+        <FrameLayout
+            android:id="@+id/content_frame"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-    </RelativeLayout>
+    </LinearLayout>
+
+    <com.grarak.kerneladiutor.elements.SplashView
+        android:id="@+id/splash_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
     <com.grarak.kerneladiutor.elements.ScrimInsetsFrameLayout
         android:id="@+id/scrimInsetsFrameLayout"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="@color/navigationdrawer_background_light"
-        app:insetForeground="#4000"
-        android:fitsSystemWindows="true">
+        android:fitsSystemWindows="true"
+        app:insetFg="#4000">
 
-        <ListView
+        <android.support.v7.widget.RecyclerView
             android:id="@+id/drawer_list"
-            android:choiceMode="singleChoice"
-            android:layout_height="match_parent"
             android:layout_width="match_parent"
-            android:divider="@null" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:scrollbarStyle="outsideOverlay"
+            android:scrollbars="vertical" />
 
     </com.grarak.kerneladiutor.elements.ScrimInsetsFrameLayout>
 

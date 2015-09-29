@@ -23,7 +23,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.SwitchCompat;
@@ -35,13 +34,13 @@ import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.CompoundButton;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.grarak.kerneladiutor.R;
 import com.grarak.kerneladiutor.elements.DAdapter;
 import com.grarak.kerneladiutor.utils.Constants;
 import com.grarak.kerneladiutor.utils.Utils;
+import com.nineoldandroids.view.ViewHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,27 +55,33 @@ public class RecyclerViewFragment extends BaseFragment {
     protected ViewGroup container;
 
     private ProgressBar progressBar;
-    private final List<DAdapter.DView> views = new ArrayList<>();
     protected RecyclerView recyclerView;
+    private CustomScrollListener onScrollListener;
     protected View applyOnBootLayout;
     protected TextView applyOnBootText;
     protected SwitchCompat applyOnBootView;
     private DAdapter.Adapter adapter;
-    private StaggeredGridLayoutManager layoutManager;
+    protected StaggeredGridLayoutManager layoutManager;
     protected View backgroundView;
     protected View fabView;
-    protected View onScrollDisappearView;
     private Handler hand;
+    private boolean firstOpening = true;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
         this.inflater = inflater;
         this.container = container;
 
         Log.i(Constants.TAG, "Opening " + getClassName());
 
+        try {
+            if (view != null) ((ViewGroup) view.getParent()).removeView(view);
+        } catch (NullPointerException ignored) {
+        }
+
         recyclerView = getRecyclerView();
+        recyclerView.setHasFixedSize(true);
+        setRecyclerView(recyclerView);
         recyclerView.setAdapter(new RecyclerView.Adapter() {
             @Override
             public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -92,66 +97,6 @@ public class RecyclerViewFragment extends BaseFragment {
                 return 0;
             }
         });
-        setRecyclerView(recyclerView);
-        int padding = (int) (2.5 * getResources().getDisplayMetrics().density);
-        recyclerView.setPadding(padding, padding, padding, padding);
-
-        if (Utils.getBoolean("hideapplyonboot", true, getActivity()))
-            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-                private int scrollMargin = 5;
-                private boolean changing;
-
-                @Override
-                public void onScrolled(RecyclerView recyclerView, int dx, final int dy) {
-                    super.onScrolled(recyclerView, dx, dy);
-
-                    if (changing || onScrollDisappearView == null) return;
-                    int y = dy;
-                    if (y < 0) y *= -1;
-                    if (y < 5) return;
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            changing = true;
-                            int actionBarHeight = Utils.getActionBarHeight(getActivity());
-                            for (int i = 0; i <= actionBarHeight / scrollMargin; i++) {
-                                try {
-                                    RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)
-                                            onScrollDisappearView.getLayoutParams();
-
-                                    int margin = params.topMargin;
-                                    if (dy < 0 && margin < 0)
-                                        margin += scrollMargin;
-                                    else if (dy > 0 && margin > -actionBarHeight)
-                                        margin -= scrollMargin;
-
-                                    if (margin >= 0) margin = 0;
-                                    if (margin <= -actionBarHeight + scrollMargin)
-                                        margin = -actionBarHeight + 1;
-
-                                    params.topMargin = margin;
-                                    getActivity().runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            onScrollDisappearView.requestLayout();
-                                        }
-                                    });
-
-                                    Thread.sleep(5);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                            try {
-                                Thread.sleep(100);
-                                changing = false;
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }).start();
-                }
-            });
 
         if (showApplyOnBoot()) {
             applyOnBootView = (SwitchCompat) view.findViewById(R.id.apply_on_boot_view);
@@ -160,9 +105,7 @@ public class RecyclerViewFragment extends BaseFragment {
                 applyOnBootView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        Utils.saveBoolean(getClassName() + "onboot", isChecked, getActivity());
-                        Utils.toast(getString(isChecked ? R.string.apply_on_boot_enabled : R.string.apply_on_boot_disabled,
-                                getActionBar().getTitle()), getActivity());
+                        applyOnBootChecked(isChecked);
                     }
                 });
             }
@@ -170,13 +113,18 @@ public class RecyclerViewFragment extends BaseFragment {
             applyOnBootText = (TextView) view.findViewById(R.id.apply_on_boot_text);
             applyOnBootLayout = view.findViewById(R.id.apply_on_boot_layout);
             if (applyOnBootLayout != null) {
-                onScrollDisappearView = applyOnBootLayout;
                 applyOnBootLayout.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         applyOnBootView.setChecked(!applyOnBootView.isChecked());
                     }
                 });
+                if (Utils.isTV(getActivity())) {
+                    applyOnBootLayout.setFocusable(true);
+                    applyOnBootLayout.setFocusableInTouchMode(true);
+                    applyOnBootView.setFocusable(false);
+                    applyOnBootView.setFocusableInTouchMode(false);
+                }
             }
         }
 
@@ -185,9 +133,14 @@ public class RecyclerViewFragment extends BaseFragment {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if (backgroundView != null) backgroundView.setVisibility(View.INVISIBLE);
             if (fabView != null) {
-                fabView.setElevation(getResources().getDisplayMetrics().density * 500);
+                fabView.setTranslationZ(getResources().getDimensionPixelSize(R.dimen.fab_elevation));
                 fabView.setVisibility(View.INVISIBLE);
             }
+        }
+
+        if (fabView != null && Utils.isTV(getActivity())) {
+            fabView.setFocusable(true);
+            fabView.setFocusableInTouchMode(true);
         }
 
         progressBar = new ProgressBar(getActivity());
@@ -195,20 +148,19 @@ public class RecyclerViewFragment extends BaseFragment {
 
         if (!showApplyOnBoot()) showApplyOnBoot(false);
 
-        showOnScrollDisappear();
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
 
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        hand = new Handler();
-                    }
-                });
-                views.clear();
-                adapter = new DAdapter.Adapter(views);
+                if (hand == null)
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            hand = new Handler();
+                        }
+                    });
+                adapter = new DAdapter.Adapter(new ArrayList<DAdapter.DView>());
                 try {
                     if (isAdded()) preInit(savedInstanceState);
                 } catch (IllegalStateException e) {
@@ -232,23 +184,24 @@ public class RecyclerViewFragment extends BaseFragment {
 
                 recyclerView.setAdapter(adapter);
                 animateRecyclerView();
-                if (hand != null) hand.post(run);
 
                 try {
                     ((ViewGroup) progressBar.getParent()).removeView(progressBar);
                 } catch (NullPointerException ignored) {
                 }
                 try {
-                    if (isAdded()) postInit(savedInstanceState);
+                    if (isAdded()) {
+                        postInit(savedInstanceState);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            if (backgroundView != null) Utils.circleAnimate(backgroundView, 0, 0);
+                            if (fabView != null)
+                                Utils.circleAnimate(fabView, fabView.getWidth() / 2, fabView.getHeight() / 2);
+                        }
+                    }
                 } catch (IllegalStateException e) {
                     e.printStackTrace();
                 }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    if (backgroundView != null) Utils.circleAnimate(backgroundView, 0, 0);
-                    if (fabView != null)
-                        Utils.circleAnimate(fabView, fabView.getWidth() / 2, fabView.getHeight() / 2);
-                }
+                firstOpening = false;
             }
         }.execute();
 
@@ -272,6 +225,12 @@ public class RecyclerViewFragment extends BaseFragment {
         recyclerView.setLayoutManager(layoutManager);
     }
 
+    public void applyOnBootChecked(boolean isChecked) {
+        Utils.saveBoolean(getClassName() + "onboot", isChecked, getActivity());
+        Utils.toast(getString(isChecked ? R.string.apply_on_boot_enabled : R.string.apply_on_boot_disabled,
+                getActionBar().getTitle()), getActivity());
+    }
+
     public void setProgressBar(ProgressBar progressBar) {
         progressBar.getIndeterminateDrawable().setColorFilter(new LightingColorFilter(0xFF000000,
                 getResources().getColor(android.R.color.white)));
@@ -293,32 +252,40 @@ public class RecyclerViewFragment extends BaseFragment {
     }
 
     public void addView(DAdapter.DView view) {
-        if (views.indexOf(view) < 0) {
-            views.add(view);
-            adapter.notifyItemInserted(views.indexOf(view));
+        if (adapter.DViews.indexOf(view) < 0) {
+            adapter.DViews.add(view);
+            adapter.notifyDataSetChanged();
         }
     }
 
     public void removeView(DAdapter.DView view) {
-        int position = views.indexOf(view);
+        int position = adapter.DViews.indexOf(view);
         if (position > -1) {
-            views.remove(position);
+            adapter.DViews.remove(position);
             adapter.notifyItemRemoved(position);
         }
     }
 
     public void removeAllViews() {
-        views.clear();
+        adapter.DViews.clear();
         adapter.notifyDataSetChanged();
     }
 
     public void addAllViews(List<DAdapter.DView> views) {
-        this.views.addAll(views);
+        adapter.DViews.addAll(views);
         adapter.notifyDataSetChanged();
     }
 
+    public DAdapter.DView getView(int position) {
+        return adapter.DViews.get(position);
+    }
+
+    public void resetRecyclerview() {
+        recyclerView.setAdapter(adapter);
+    }
+
     public int getCount() {
-        return views.size();
+        return adapter.DViews.size();
     }
 
     public void animateRecyclerView() {
@@ -331,21 +298,100 @@ public class RecyclerViewFragment extends BaseFragment {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        layoutManager.setSpanCount(getSpan());
-        showOnScrollDisappear();
+        if (layoutManager != null) layoutManager.setSpanCount(getSpan());
+        resetTranslations();
     }
 
-    private void showOnScrollDisappear() {
-        if (onScrollDisappearView != null) {
-            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) onScrollDisappearView
-                    .getLayoutParams();
-            layoutParams.topMargin = 0;
-            onScrollDisappearView.requestLayout();
+    @Override
+    public void onViewCreated() {
+        super.onViewCreated();
+        setOnScrollListener(recyclerView);
+    }
+
+    public void setOnScrollListener(RecyclerView recyclerView) {
+        if (recyclerView != null) {
+            int paddingBottom = recyclerView.getPaddingBottom()
+                    + getResources().getDimensionPixelSize(R.dimen.basecard_padding);
+            if (applyOnBootLayout != null) {
+                recyclerView.setPadding(0, applyOnBootLayout.getHeight(), 0, firstOpening ? paddingBottom
+                        : recyclerView.getPaddingBottom());
+                resetTranslations();
+
+                if (!Utils.isTV(getActivity()))
+                    recyclerView.addOnScrollListener(onScrollListener = new CustomScrollListener());
+            } else recyclerView.setPadding(0, 0, 0, firstOpening ? paddingBottom
+                    : recyclerView.getPaddingBottom());
+            recyclerView.setClipToPadding(false);
         }
     }
 
-    public ActionBar getActionBar() {
-        return ((AppCompatActivity) getActivity()).getSupportActionBar();
+    private class CustomScrollListener extends RecyclerView.OnScrollListener {
+
+        private int offset;
+        private boolean scroll = true;
+
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+
+            if (scroll && Utils.getBoolean("hideapplyonboot", true, getActivity())) {
+                int height = applyOnBootLayout.getHeight();
+                offset += dy;
+                if (offset > height) offset = height;
+                else if (offset < 0) offset = 0;
+                move(offset);
+            }
+            scroll = true;
+        }
+
+        private void move(int offset) {
+            ViewHelper.setTranslationY(applyOnBootLayout, -offset);
+        }
+
+        public void reset() {
+            offset = 0;
+            scroll = false;
+        }
+
+        @Override
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+
+            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                int height = applyOnBootLayout.getHeight();
+                if (offset > 0 && offset < height && ViewHelper.getTranslationY(applyOnBootLayout) != 0)
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                float density = getResources().getDisplayMetrics().density * 2;
+                                for (; offset >= 0; offset -= density) {
+                                    getActivity().runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            move(offset);
+                                        }
+                                    });
+                                    Thread.sleep(16);
+                                }
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (offset != 0) move(offset = 0);
+                                    }
+                                });
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }).start();
+            }
+        }
+    }
+
+    public void resetTranslations() {
+        if (applyOnBootLayout != null) ViewHelper.setTranslationY(applyOnBootLayout, 0);
+        if (onScrollListener != null) onScrollListener.reset();
     }
 
     public boolean showApplyOnBoot() {
@@ -356,12 +402,16 @@ public class RecyclerViewFragment extends BaseFragment {
         try {
             getParentView(R.layout.recyclerview_vertical).findViewById(R.id.apply_on_boot_layout).setVisibility(
                     visible ? View.VISIBLE : View.GONE);
+            int paddingTop = visible ? recyclerView.getPaddingTop() + applyOnBootLayout.getHeight() :
+                    recyclerView.getPaddingTop() - applyOnBootLayout.getHeight();
+            recyclerView.setPadding(recyclerView.getPaddingLeft(), paddingTop, recyclerView.getPaddingRight(), 0);
         } catch (NullPointerException ignored) {
         }
     }
 
     public int getSpan() {
         int orientation = Utils.getScreenOrientation(getActivity());
+        if (Utils.isTV(getActivity())) return 2;
         if (Utils.isTablet(getActivity()))
             return orientation == Configuration.ORIENTATION_PORTRAIT ? 2 : 3;
         return orientation == Configuration.ORIENTATION_PORTRAIT ? 1 : 2;
@@ -378,17 +428,22 @@ public class RecyclerViewFragment extends BaseFragment {
     private final Runnable run = new Runnable() {
         @Override
         public void run() {
-            if (isAdded()) {
-                if (onRefresh()) {
-                    if (hand != null) hand.postDelayed(run, 1000);
+            if (hand != null)
+                if (isAdded() && onRefresh()) {
+                    hand.postDelayed(run, 1000);
                 } else if (hand != null) hand.removeCallbacks(run);
-            } else if (hand != null) hand.postDelayed(run, 1000);
         }
     };
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void onResume() {
+        super.onResume();
+        if (hand != null) hand.post(run);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
         if (hand != null) hand.removeCallbacks(run);
     }
 
